@@ -219,8 +219,9 @@ def edit_copy(event=None):
     return 'break'
 
 
-def edit_cut( ):
-    Frame.event_generate("<<Cut>>")
+def edit_cut(event=None):
+    edit_copy()
+    edit_delete()
 
 
 def edit_paste(event=None):
@@ -233,11 +234,11 @@ def edit_paste(event=None):
 
 
 def edit_delete(event=None):
-
-    if not rs.tag_ranges('sel'):
-        showerror('PyEdit', 'No text selected')
-    else:
-        rs.delete("sel.first", "sel.last")
+    if rs.get() == 0:
+        clipped_text = rect_sel_end()
+        if clipped_text != None:
+            rect_sel_end(delete=1)
+            return 'break'
 
 
 def edit_select_all(event=None):
@@ -390,6 +391,10 @@ redobtn = PhotoImage(file='redo.png')
 redo = Button(toolbar, image=redobtn, command=editor.edit_redo)
 redo.image = redobtn
 redo.pack(side=LEFT)
+quitbtn = PhotoImage(file='close.png')
+closeb = Button(toolbar, image=quitbtn, command=close)
+closeb.image = quitbtn
+closeb.pack(side=LEFT)
 
 
 
