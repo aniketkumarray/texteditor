@@ -4,12 +4,18 @@
 
 import os
 import sys
-from tkinter import PhotoImage, messagebox, mainloop, Toplevel, Tk, Text, Menu, IntVar, StringVar, TclError, SEL, INSERT, END, NONE, WORD, TOP, RAISED, SUNKEN, HORIZONTAL, E, W, N, S, X, BOTTOM, BOTH, LEFT
-from tkinter.ttk import Entry, Frame, LabelFrame, Radiobutton, Scrollbar, Button, Label
+from tkinter import *
+from tkinter import PhotoImage, messagebox,mainloop, Toplevel, Tk, Text, Menu, IntVar, Entry, TclError, SEL, INSERT, END, NONE, WORD, TOP, RAISED, SUNKEN, HORIZONTAL, E, W, N, S, X, BOTTOM, BOTH, LEFT
+from tkinter.ttk import  Frame, Scrollbar, Button, Label,Checkbutton
 from tkinter.filedialog import askopenfile
 from tkinter.messagebox import showinfo, showerror
-
-TITLE = "Subedi Text Editor"
+from tkinter.simpledialog import askstring
+try:
+    import textConfig                        # startup font and colors
+    configs = textConfig.__dict__            # work if not on the path or bad
+except:                                      # define in client app directory
+    configs = {}
+TITLE = "Aniket Text Editor"
 top = Tk()
 if "nt" == os.name:
     top.wm_iconbitmap(bitmap="Notepad.ico")  # top.wm_iconbitmap("Notepad.ico")
@@ -25,21 +31,18 @@ key_word = ""
 frame = Frame(top, relief=SUNKEN)
 frame.grid_rowconfigure(0, weight=1)
 frame.grid_columnconfigure(0, weight=1)
-xscrollbar = Scrollbar(frame, orient=HORIZONTAL)
-xscrollbar.grid(row=1, column=0, sticky=E + W)
 yscrollbar = Scrollbar(frame)
 yscrollbar.grid(row=0, column=1, sticky=N + S)
 
 # text widget
 editor = Text(frame, wrap=NONE,
-              xscrollcommand=xscrollbar.set,
               yscrollcommand=yscrollbar.set)
 editor.focus_set()
 editor.grid(row=0, column=0, sticky=N + S + E + W)
 editor.config(wrap=WORD,  # use word wrapping
               undo=True,  # Tk 8.4
               width=64)
-xscrollbar.config(command=editor.xview)
+
 yscrollbar.config(command=editor.yview)
 
 
@@ -249,82 +252,52 @@ def edit_select_all(event=None):
 
 
 def edit_find(event=None):
-    try:
-        editor.tag_delete("search")
-    except:
-        pass
-    self = Toplevel(top)
-    self.searchlabel = Label(self, text="Find what:")
-    self.searchlabel.pack()
-    self.key_word_entry = Entry(self, text="Find something...")
-    self.key_word_entry.pack()
-    self.matchcasevar = IntVar()
-    self.matchcasevar.set(1)
+    search_toplevel = Toplevel(frame)
+    search_toplevel.title('Find Text')
+    search_toplevel.transient(frame)
 
-    self.matchcase.pack()
-    self.searcharea = StringVar()
-    self.searcharea.set("all")
-    self.group = LabelFrame(self, text="Direction", padx=5, pady=5)
-    self.group.pack(padx=1, pady=3, anchor=W)
-    Radiobutton(self.group, text="Up", variable=self.searcharea, value="up").pack(anchor=W)
-    Radiobutton(self.group, text="Down", variable=self.searcharea, value="down").pack(anchor=W)
-    Radiobutton(self.group, text="All", variable=self.searcharea, value="all").pack(anchor=W)
-    self.key_word_entry.focus()
+    Label(search_toplevel, text="Find All:").grid(row=0, column=0, sticky='e')
 
-    def get_parameters(reply):
-        key_word = self.key_word_entry.get()
-        if self.searcharea.get() == "up":
-            self.search_from = "1.0"
-            self.search_until = INSERT
-        elif self.searcharea.get() == "down":
-            self.search_from = INSERT
-            self.search_until = END
-        elif self.searcharea.get() == "all":
-            self.search_from = "1.0"
-            self.search_until = END
-        self.case_sensitive = self.matchcasevar.get()
-        if reply == 1:
-            answer = [key_word, self.search_from, self.search_until, self.case_sensitive]
-            return answer
+    search_entry_widget = Entry(
+        search_toplevel, width=25)
+    search_entry_widget.grid(row=0, column=1, padx=2, pady=2, sticky='we')
+    search_entry_widget.focus_set()
+    ignore_case_value = IntVar()
+    Checkbutton(search_toplevel, text='Ignore Case', variable=ignore_case_value).grid(
+        row=1, column=1, sticky='e', padx=2, pady=2)
+    Button(search_toplevel, text="Find All", underline=0,
+           command=lambda: search_output(
+               search_entry_widget.get(), ignore_case_value.get(),
+               editor, search_toplevel, search_entry_widget)
+           ).grid(row=0, column=2, sticky='e' + 'w', padx=2, pady=2)
 
-    get_parameters(reply=0)
+    def close_search_window():
+        editor.tag_remove('match', '1.0', END)
+        search_toplevel.destroy()
 
-    def findnextcmd(top=top, self=self, event=None):
-        try:
-            editor.tag_delete("current_word")
-        except:
-            pass
-        answer = get_parameters(reply=1)
-        key_word = answer[0]
-        search_from = answer[1]
-        search_until = answer[2]
-        case_sensitive = answer[3]
+    search_toplevel.protocol('WM_DELETE_WINDOW', close_search_window)
+    return "break"
+
+
+def search_output(needle, if_ignore_case, content_text,
+                  search_toplevel, search_box):
+    content_text.tag_remove('match', '1.0', END)
+    matches_found = 0
+    if needle:
+        start_pos = '1.0'
         while True:
-            start_kw = editor.search(key_word, search_from, stopindex=search_until, nocase=case_sensitive)
-            if start_kw == "" or start_kw == None:
-                try:
-                    start_kw = editor.search(key_word, answer[1], stopindex=search_until, nocase=case_sensitive)
-                    editor.tag_configure("current_word", background="sea green")
-                    editor.tag_add("current_word", start_kw, "%s + %sc" % (start_kw, len(key_word)))
-                    editor.see("%s + %sc" % (start_kw, len(key_word)))
-                except:
-                    pass
+            start_pos = content_text.search(needle, start_pos,
+                                            nocase=if_ignore_case, stopindex=END)
+            if not start_pos:
                 break
-            editor.tag_configure("search", background="green")
-            editor.tag_add("search", start_kw, "%s + %sc" % (start_kw, len(key_word)))
-            search_from = "%s + %sc " % (start_kw, len(key_word))
-
-    self.findnext = Button(self, text="Find Next", command=findnextcmd)
-    self.findnext.pack(anchor=W)
-    self.bind("<Return>", findnextcmd)
-
-    def cancelcmd(self=self):
-        self.unbind("<Return>")
-        editor.focus()
-        self.destroy()
-
-    self.cancel = Button(self, text="Cancel", command=cancelcmd)
-    self.cancel.pack(anchor=W)
+            end_pos = '{}+{}c'.format(start_pos, len(needle))
+            content_text.tag_add('match', start_pos, end_pos)
+            matches_found += 1
+            start_pos = end_pos
+        content_text.tag_config(
+            'match', foreground='red', background='yellow')
+    search_box.focus_set()
+    search_toplevel.title('{} matches found'.format(matches_found))
 
 
 def edit_goto(event=None):
