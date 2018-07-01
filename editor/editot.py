@@ -13,89 +13,28 @@ root.geometry('700x600')
 root.title(PROGRAM_NAME)
 
 
-# show pop-up menu
-
-
-def show_popup_menu(event):
-    popup_menu.tk_popup(event.x_root, event.y_root)
-
-
-def show_cursor_info_bar():
-    show_cursor_info_checked = show_cursor_info.get()
-    if show_cursor_info_checked:
-        cursor_info_bar.pack(expand='no', fill=None, side='right', anchor='se')
-    else:
-        cursor_info_bar.pack_forget()
-
-
-def update_cursor_info_bar():
-    row, col = content_text.index(INSERT).split('.')
-    line_num, col_num = str(int(row)), str(int(col) + 1)  # col starts at 0
-    infotext = "Line: {0} | Column: {1}".format(line_num, col_num)
-    cursor_info_bar.config(text=infotext)
-
-
-def change_theme():
-    selected_theme = theme_choice.get()
-    fg_bg_colors = color_schemes.get(selected_theme)
-    foreground_color, background_color = fg_bg_colors.split('.')
-    content_text.config(
-        background=background_color, fg=foreground_color)
-
-
-def update_line_numbers():
-    line_numbers = get_line_numbers()
-    line_number_bar.config(state='normal')
-    line_number_bar.delete('1.0', 'end')
-    line_number_bar.insert('1.0', line_numbers)
-    line_number_bar.config(state='disabled')
-
-
-def highlight_line(interval=100):
-    content_text.tag_remove("active_line", 1.0, "end")
-    content_text.tag_add(
-        "active_line", "insert linestart", "insert lineend+1c")
-    content_text.after(interval, toggle_highlight)
-
-
-def undo_highlight():
-    content_text.tag_remove("active_line", 1.0, "end")
-
-
-def toggle_highlight():
-    if to_highlight_line.get():
-        highlight_line()
-    else:
-        undo_highlight()
-
-
-def on_content_changed():
-    update_line_numbers()
-    update_cursor_info_bar()
-
-
-def get_line_numbers():
-    output = ''
-    if show_line_number.get():
-        row, col = content_text.index("end").split('.')
-        for i in range(1, int(row)):
-            output += str(i) + '\n'
-    return output
-
-
-def display_about_messagebox():
+def display_about_messagebox(event=None):
     tkinter.messagebox.showinfo(
-        "About", "{}{}".format(PROGRAM_NAME, "\nTkinter GUI Application\n By Aniket Kumar Ray "))
+        "About", "{}{}".format(PROGRAM_NAME,"Text editor is an application like notepad to write documents and other files."
+                               "The text editor is made using python using Tkinter GUI interface.,"
+                               "It offers various text editor features such as :"
+                               "Functions similar to any other plain text editors"
+                               "Shows Line Number"
+                               "Highlights the current line"
+                               "Shows cursor location at the bottom"
+                               "Open,close,create and edit files"
+
+                               "Objectives:Tkinter interface for Text editor,Basic text editor tasks like cursor,line "
+                               "number,File handling to manage the text files,Different icons for cut,copy,info,"
+                               "find_text,new file,open file,Line numbers  and column number display at the bottom. "))
 
 
-
-
-def exit_editor():
+def exit_editor(event=None):
     if tkinter.messagebox.askokcancel("Quit?", "Really quit?"):
         root.destroy()
 
 
-def new_file():
+def new_file(event=None):
     root.title("Untitled")
     global file_name
     file_name = None
@@ -103,7 +42,7 @@ def new_file():
     on_content_changed()
 
 
-def open_file():
+def open_file(event=None):
     input_file_name = tkinter.filedialog.askopenfilename(defaultextension=".txt",
                                                          filetypes=[("All Files", "*.*"), ("Text Documents", "*.txt")])
     if input_file_name:
@@ -125,10 +64,9 @@ def write_to_file(file_name):
         tkinter.messagebox.showwarning("Save", "Could not save the file.")
 
 
-def save_as():
+def save_as(event=None):
     input_file_name = tkinter.filedialog.asksaveasfilename(defaultextension=".txt",
-                                                           filetypes=[("All Files", "*.*"),
-                                                                      ("Text Documents", "*.txt")])
+                                                           filetypes=[("All Files", "*.*"), ("Text Documents", "*.txt")])
     if input_file_name:
         global file_name
         file_name = input_file_name
@@ -137,7 +75,7 @@ def save_as():
     return "break"
 
 
-def save():
+def save(event=None):
     global file_name
     if not file_name:
         save_as()
@@ -146,12 +84,12 @@ def save():
     return "break"
 
 
-def select_all():
+def select_all(event=None):
     content_text.tag_add('sel', '1.0', 'end')
     return "break"
 
 
-def find_text():
+def find_text(event=None):
     search_toplevel = Toplevel(root)
     search_toplevel.title('Find Text')
     search_toplevel.transient(root)
@@ -174,7 +112,6 @@ def find_text():
     def close_search_window():
         content_text.tag_remove('match', '1.0', END)
         search_toplevel.destroy()
-
     search_toplevel.protocol('WM_DELETE_WINDOW', close_search_window)
     return "break"
 
@@ -217,17 +154,81 @@ def paste():
     return "break"
 
 
-def undo():
+def undo(event=None):
     content_text.event_generate("<<Undo>>")
     on_content_changed()
     return "break"
 
 
-def redo():
+def redo(event=None):
     content_text.event_generate("<<Redo>>")
     on_content_changed()
     return 'break'
+def show_popup_menu(event):
+    popup_menu.tk_popup(event.x_root, event.y_root)
 
+
+def show_cursor_info_bar():
+    show_cursor_info_checked = show_cursor_info.get()
+    if show_cursor_info_checked:
+        cursor_info_bar.pack(expand='no', fill=None, side='right', anchor='se')
+    else:
+        cursor_info_bar.pack_forget()
+
+
+def update_cursor_info_bar(event=None):
+    row, col = content_text.index(INSERT).split('.')
+    line_num, col_num = str(int(row)), str(int(col) + 1)  # col starts at 0
+    infotext = "Line: {0} | Column: {1}".format(line_num, col_num)
+    cursor_info_bar.config(text=infotext)
+
+
+def change_theme(event=None):
+    selected_theme = theme_choice.get()
+    fg_bg_colors = color_schemes.get(selected_theme)
+    foreground_color, background_color = fg_bg_colors.split('.')
+    content_text.config(
+        background=background_color, fg=foreground_color)
+
+
+def update_line_numbers(event=None):
+    line_numbers = get_line_numbers()
+    line_number_bar.config(state='normal')
+    line_number_bar.delete('1.0', 'end')
+    line_number_bar.insert('1.0', line_numbers)
+    line_number_bar.config(state='disabled')
+
+
+def highlight_line(interval=100):
+    content_text.tag_remove("active_line", 1.0, "end")
+    content_text.tag_add(
+        "active_line", "insert linestart", "insert lineend+1c")
+    content_text.after(interval, toggle_highlight)
+
+
+def undo_highlight():
+    content_text.tag_remove("active_line", 1.0, "end")
+
+
+def toggle_highlight(event=None):
+    if to_highlight_line.get():
+        highlight_line()
+    else:
+        undo_highlight()
+
+
+def on_content_changed(event=None):
+    update_line_numbers()
+    update_cursor_info_bar()
+
+
+def get_line_numbers():
+    output = ''
+    if show_line_number.get():
+        row, col = content_text.index("end").split('.')
+        for i in range(1, int(row)):
+            output += str(i) + '\n'
+    return output
 
 new_file_icon = PhotoImage(file='icons/new_file.png')
 open_file_icon = PhotoImage(file='icons/open_file.png')
@@ -252,8 +253,7 @@ file_menu.add_command(label='Save', accelerator='Ctrl+S',
 file_menu.add_command(
     label='Save as', accelerator='Shift+Ctrl+S', compound='left', image=saveAs_file_icon, underline=0, command=save_as)
 file_menu.add_separator()
-file_menu.add_command(label='Exit', accelerator='Alt+F4', compound='left', image=close_icon, underline=0,
-                      command=exit_editor)
+file_menu.add_command(label='Exit', accelerator='Alt+F4',compound='left', image=close_icon, underline=0, command=exit_editor)
 menu_bar.add_cascade(label='File', menu=file_menu)
 
 edit_menu = Menu(menu_bar, tearoff=0)
@@ -270,11 +270,12 @@ edit_menu.add_command(label='Paste', accelerator='Ctrl+V',
                       compound='left', image=paste_icon, command=paste)
 edit_menu.add_separator()
 edit_menu.add_command(label='Find', underline=0,
-                      accelerator='Ctrl+F', compound='left', image=find_icon, command=find_text)
+                      accelerator='Ctrl+F',compound='left', image=find_icon, command=find_text)
 edit_menu.add_separator()
 edit_menu.add_command(label='Select All', underline=7,
                       accelerator='Ctrl+A', command=select_all)
 menu_bar.add_cascade(label='Edit', menu=edit_menu)
+
 
 view_menu = Menu(menu_bar, tearoff=0)
 show_line_number = IntVar()
@@ -310,16 +311,14 @@ menu_bar.add_cascade(label='View', menu=view_menu)
 
 about_menu = Menu(menu_bar, tearoff=0)
 about_menu.add_command(label='About', command=display_about_messagebox)
-
-
-menu_bar.add_cascade(label='About', menu=about_menu)
+menu_bar.add_cascade(label='About',  menu=about_menu)
 root.config(menu=menu_bar)
 
-shortcut_bar = Frame(root, height=25)
+shortcut_bar = Frame(root,  height=25)
 shortcut_bar.pack(expand='no', fill='x')
 
 icons = ('new_file', 'open_file', 'save', 'cut', 'copy', 'paste',
-         'undo', 'redo', 'find_text', 'exit_editor')
+         'undo', 'redo', 'find_text','exit_editor')
 for i, icon in enumerate(icons):
     tool_bar_icon = PhotoImage(file='icons/{}.png'.format(icon))
     cmd = eval(icon)
@@ -327,9 +326,9 @@ for i, icon in enumerate(icons):
     tool_bar.image = tool_bar_icon
     tool_bar.pack(side='left')
 
-line_number_bar = Text(root, width=4, padx=3, takefocus=0, border=0,
-                       background='khaki', state='disabled', wrap='none')
-line_number_bar.pack(side='left', fill='y')
+line_number_bar = Text(root, width=4, padx=3, takefocus=0,  border=0,
+                       background='khaki', state='disabled',  wrap='none')
+line_number_bar.pack(side='left',  fill='y')
 
 content_text = Text(root, wrap='word', undo=1)
 content_text.pack(expand='yes', fill='both')
@@ -339,6 +338,7 @@ scroll_bar.config(command=content_text.yview)
 scroll_bar.pack(side='right', fill='y')
 cursor_info_bar = Label(content_text, text='Line: 1 | Column: 1')
 cursor_info_bar.pack(expand='no', fill=None, side='right', anchor='se')
+
 
 content_text.bind('<Control-N>', new_file)
 content_text.bind('<Control-n>', new_file)
@@ -363,6 +363,7 @@ for j in ('cut', 'copy', 'paste', 'undo', 'redo'):
 popup_menu.add_separator()
 popup_menu.add_command(label='Select All', underline=7, command=select_all)
 content_text.bind('<Button-3>', show_popup_menu)
+
 
 # bind right mouse click to show pop up and set focus to text widget on launch
 content_text.bind('<Button-3>', show_popup_menu)
